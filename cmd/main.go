@@ -3,11 +3,13 @@ package main
 import (
 	"log"
 	"time"
+
+	"github.com/wiless/multitimer"
 )
 
 func main() {
 
-	t := make([]Timer, 5)
+	t := make([]multitimer.Timer, 5)
 	intervals := []int{2, 3, 7, 1, 10}
 	for i := 0; i < 5; i++ {
 		t[i] = NewTimer(i)

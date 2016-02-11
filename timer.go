@@ -1,4 +1,4 @@
-package main
+package multitimer
 
 import (
 	"log"
@@ -18,6 +18,7 @@ func NewTimer(id int) Timer {
 }
 
 func (t *Timer) Start() {
+
 	if t.maxCount == 0 {
 		t.maxCount = 1
 	}
@@ -35,6 +36,8 @@ func (t *Timer) Start() {
 			}
 
 		}
+	} else {
+		log.Println("Cannot Start timer  ", t.d)
 	}
 }
 
