@@ -10,6 +10,7 @@ type Timer struct {
 	maxCount  int
 	ID        int
 	TimeOutFn func(int)
+	pause     chan bool
 }
 
 func NewTimer(id int) Timer {
@@ -22,17 +23,24 @@ func (t *Timer) Start() {
 	if t.maxCount == 0 {
 		t.maxCount = 1
 	}
+	t.pause = make(chan bool)
 	if t.d > 0 {
 		for i := 0; i < t.maxCount; i++ {
 
-			time.Sleep(t.d)
+			select {
+			case _ = <-t.pause:
+				log.Println("[%d] : I was asked to PAUSE !!", t.ID)
+				return
+			default:
+				time.Sleep(t.d)
 
-			if t.TimeOutFn != nil {
-				log.Printf("I am out %d...., Calling timeoutFn()", t.ID)
-				t.TimeOutFn(t.ID)
-			} else {
-				log.Printf("I am out %d...., but dont know what to do !! ", t.ID)
+				if t.TimeOutFn != nil {
+					log.Printf("[%d] : %d of %d Calling timeoutFn()", t.ID, i, t.maxCount)
+					t.TimeOutFn(t.ID)
+				} else {
+					log.Printf("[%d] : %d of %d Calling DONT KNOW WHOM ", t.ID, i, t.maxCount)
 
+				}
 			}
 
 		}
@@ -42,7 +50,7 @@ func (t *Timer) Start() {
 }
 
 func (t *Timer) Stop() {
-
+	t.pause <- true
 }
 
 func (t *Timer) SetInterval(d time.Duration) {
