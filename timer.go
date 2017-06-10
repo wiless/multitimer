@@ -13,14 +13,14 @@ type Timer struct {
 	ID        int
 	TimeOutFn func(int)
 	pause     chan bool
-	paussed   bool
+	paused    bool
 	sync.Mutex
 }
 
 func NewTimer(id int) Timer {
 	result := Timer{ID: id}
 	result.pause = make(chan bool)
-	result.paussed = false
+	result.paused = false
 	return result
 }
 
@@ -28,22 +28,19 @@ func (t *Timer) Start() {
 
 	if t.maxCount == 0 {
 		t.maxCount = 1
+	} else {
+		t.maxCount-- // Reduce the count as we immediately take first measurement @aba @ssk
 	}
 
 	if t.d > 0 {
 		t.Mutex.Lock()
-		t.paussed = false
+		t.paused = false
 		t.Mutex.Unlock()
-		for i := 0; i < t.maxCount && t.paussed == false; i++ {
+		for i := 0; i < t.maxCount && t.paused == false; i++ {
 
-			// select {
-			// case _ = <-t.pause:
-			// 	log.Println("[%d] : I was asked to PAUSE !!", t.ID)
-			// 	i = t.maxCount
-			// 	break
-			// default:
-			time.Sleep(t.d)
-			if t.paussed {
+			// Dont sleep immediately.. run the first measurement @aba @ssk
+			// time.Sleep(t.d)
+			if t.paused {
 				log.Printf("[T %d] I was asked to resign while sleeping...", t.ID)
 			} else {
 				if t.TimeOutFn != nil {
@@ -55,7 +52,7 @@ func (t *Timer) Start() {
 
 				}
 			}
-			// }
+			time.Sleep(t.d)
 
 		}
 		log.Println("Leaving timer ", t.ID)
@@ -68,7 +65,7 @@ func (t *Timer) Start() {
 
 func (t *Timer) Stop() {
 	t.Mutex.Lock()
-	t.paussed = true
+	t.paused = true
 	t.Mutex.Unlock()
 	runtime.Gosched()
 	// t.pause <- true
