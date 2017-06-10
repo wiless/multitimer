@@ -14,6 +14,7 @@ type Timer struct {
 	TimeOutFn func(int)
 	pause     chan bool
 	paused    bool
+	autoStart bool
 	sync.Mutex
 }
 
@@ -21,7 +22,12 @@ func NewTimer(id int) Timer {
 	result := Timer{ID: id}
 	result.pause = make(chan bool)
 	result.paused = false
+	result.autoStart = false
 	return result
+}
+
+func (t *Timer) SetAutoStart(yes bool) {
+	t.autoStart = yes
 }
 
 func (t *Timer) Start() {
@@ -29,7 +35,9 @@ func (t *Timer) Start() {
 	if t.maxCount == 0 {
 		t.maxCount = 1
 	} else {
-		t.maxCount-- // Reduce the count as we immediately take first measurement @aba @ssk
+		if t.autoStart {
+			t.maxCount-- // Reduce the count as we immediately take first measurement @aba @ssk
+		}
 	}
 
 	if t.d > 0 {
@@ -38,8 +46,11 @@ func (t *Timer) Start() {
 		t.Mutex.Unlock()
 		for i := 0; i < t.maxCount && t.paused == false; i++ {
 
-			// Dont sleep immediately.. run the first measurement @aba @ssk
-			// time.Sleep(t.d)
+			if !t.autoStart {
+				//  sleep immediately..if not autostart function
+				time.Sleep(t.d)
+			}
+
 			if t.paused {
 				log.Printf("[T %d] I was asked to resign while sleeping...", t.ID)
 			} else {
@@ -52,7 +63,10 @@ func (t *Timer) Start() {
 
 				}
 			}
-			time.Sleep(t.d)
+			if t.autoStart {
+				// if autostart.. sleep after executing first time
+				time.Sleep(t.d)
+			}
 
 		}
 		log.Println("Leaving timer ", t.ID)
