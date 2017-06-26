@@ -12,6 +12,7 @@ type Timer struct {
 	maxCount  int
 	ID        int
 	TimeOutFn func(int)
+	DoneFn    func(int)
 	pause     chan bool
 	paused    bool
 	autoStart bool
@@ -68,6 +69,9 @@ func (t *Timer) Start() {
 				time.Sleep(t.d)
 			}
 
+		}
+		if t.DoneFn != nil {
+			t.DoneFn(t.ID)
 		}
 		log.Println("Leaving timer ", t.ID)
 		return
